@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
   <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 	
@@ -22,30 +23,102 @@
             packages: "transliteration"
           });
 
+      var transliterationControl;
       function onLoad() {
         var options = {
-          sourceLanguage: 'en',
-          destinationLanguage: ['hi','kn','ml','ta','te'],
-          shortcutKey: 'ctrl+g',
-          transliterationEnabled: true
+            sourceLanguage: 'en',
+            destinationLanguage: ['ar','hi','kn','ml','ta','te'],
+            transliterationEnabled: true,
+            shortcutKey: 'ctrl+g'
         };
-
         // Create an instance on TransliterationControl with the required
         // options.
-        var control =
-            new google.elements.transliteration.TransliterationControl(options);
+        transliterationControl =
+          new google.elements.transliteration.TransliterationControl(options);
 
         // Enable transliteration in the textfields with the given ids.
         var ids = [ "transl1", "transl2" ];
-        control.makeTransliteratable(ids);
+        transliterationControl.makeTransliteratable(ids);
 
-        // Show the transliteration control which can be used to toggle between
-        // English and Hindi and also choose other destination language.
-        control.showControl('translControl');
+        // Add the STATE_CHANGED event handler to correcly maintain the state
+        // of the checkbox.
+        transliterationControl.addEventListener(
+            google.elements.transliteration.TransliterationControl.EventType.STATE_CHANGED,
+            transliterateStateChangeHandler);
+
+        // Add the SERVER_UNREACHABLE event handler to display an error message
+        // if unable to reach the server.
+        transliterationControl.addEventListener(
+            google.elements.transliteration.TransliterationControl.EventType.SERVER_UNREACHABLE,
+            serverUnreachableHandler);
+
+        // Add the SERVER_REACHABLE event handler to remove the error message
+        // once the server becomes reachable.
+        transliterationControl.addEventListener(
+            google.elements.transliteration.TransliterationControl.EventType.SERVER_REACHABLE,
+            serverReachableHandler);
+
+        // Set the checkbox to the correct state.
+        document.getElementById('checkboxId').checked =
+          transliterationControl.isTransliterationEnabled();
+
+        // Populate the language dropdown
+        var destinationLanguage =
+          transliterationControl.getLanguagePair().destinationLanguage;
+        var languageSelect = document.getElementById('languageDropDown');
+        var supportedDestinationLanguages =
+          google.elements.transliteration.getDestinationLanguages(
+            google.elements.transliteration.LanguageCode.ENGLISH);
+        for (var lang in supportedDestinationLanguages) {
+          var opt = document.createElement('option');
+          opt.text = lang;
+          opt.value = supportedDestinationLanguages[lang];
+          if (destinationLanguage == opt.value) {
+            opt.selected = true;
+          }
+          try {
+            languageSelect.add(opt, null);
+          } catch (ex) {
+            languageSelect.add(opt);
+          }
+        }
+      }
+
+      // Handler for STATE_CHANGED event which makes sure checkbox status
+      // reflects the transliteration enabled or disabled status.
+      function transliterateStateChangeHandler(e) {
+        document.getElementById('checkboxId').checked = e.transliterationEnabled;
+      }
+
+      // Handler for checkbox's click event.  Calls toggleTransliteration to toggle
+      // the transliteration state.
+      function checkboxClickHandler() {
+        transliterationControl.toggleTransliteration();
+      }
+
+      // Handler for dropdown option change event.  Calls setLanguagePair to
+      // set the new language.
+      function languageChangeHandler() {
+        var dropdown = document.getElementById('languageDropDown');
+        transliterationControl.setLanguagePair(
+            google.elements.transliteration.LanguageCode.ENGLISH,
+            dropdown.options[dropdown.selectedIndex].value);
+      }
+
+      // SERVER_UNREACHABLE event handler which displays the error message.
+      function serverUnreachableHandler(e) {
+        document.getElementById("errorDiv").innerHTML =
+            "Transliteration Server unreachable";
+      }
+
+      // SERVER_UNREACHABLE event handler which clears the error message.
+      function serverReachableHandler(e) {
+        document.getElementById("errorDiv").innerHTML = "";
       }
       google.setOnLoadCallback(onLoad);
 
     </script>
+
 	<script>
 		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -68,13 +141,20 @@
 <a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
 
     <center>Type in Indian languages (Press Ctrl+g to toggle between English and Hindi)</center>
-    <div id="translControl"></div>
+    <div id='translControl'>
+      <input type="checkbox" id="checkboxId" onclick="javascript:checkboxClickHandler()"></input>
+      Type in <select id="languageDropDown" onchange="javascript:languageChangeHandler()"></select>
+    </div>
+
     <br>Text to convert<br><textarea id="transl2" style="width:610px;height:200px"></textarea>
-<div class="messagebox success" style="width:600px">
-<strong>Result</strong>
-    <div id='outControl'></div>
-    <br>Braille (Grade 1)<br><textarea id="transl2" style="width:585px;height:198px"></textarea>
-</div>
+
+    <br><div id="errorDiv"></div>
+
+    <div class="messagebox success" style="width:600px">
+        <strong>Result</strong>
+        <div id='outControl'></div>
+        <br>Braille (Grade 1)<br><textarea id="transl2" style="width:585px;height:198px"></textarea>
+    </div>
 
       </section>
       <footer>
