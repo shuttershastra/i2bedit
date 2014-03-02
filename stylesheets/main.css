@@ -1,0 +1,16 @@
+.messagebox.success {
+    background-color: #D1EED1;
+    border-color: #BFE7BF;
+}
+.messagebox {
+    background-color: #D1EED1;
+    padding: 8px;
+    border-color: #BFE7BF;
+    box-shadow: none;
+    text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.5);
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 4px;
+    color: #404040;
+    margin-bottom: 20px;
+}
