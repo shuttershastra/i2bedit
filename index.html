@@ -2,19 +2,20 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1"/>
 	
     <title>I2bedit</title>
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <link rel="stylesheet" href="stylesheets/styles.css"/>
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
     <link rel="stylesheet" href="stylesheets/main.css"></link>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 	<script type="text/javascript" src="https://www.google.com/jsapi">
+    <script type="text/javascript" src="javascripts/charset_be">
     </script>
     <script type="text/javascript">
 
@@ -128,6 +129,83 @@
 		ga('create', 'UA-48568916-1', 'shuttershastra.github.io');
 		ga('send', 'pageview');
 	</script>
+    
+    <script>
+    var characters = 
+    {
+        // Alphabet
+        // | অ | আ | ই | ঈ | উ | ঊ | এ | ঐ | ও | ঔ | ঋ | ঌ | 
+        "অ":1,"আ":345,"ই":24,"ঈ":35,"উ":136,"ঊ":1256,"এ":15,"ঐ":34,"ও":135,"ঔ":246,"ঋ":[5, 1235],"ঌ":[5, 123],
+        // | ক | খ | গ | ঘ | ঙ | চ | ছ | জ | ঝ | ঞ | 
+        "ক":13, "খ":46, "গ":1245, "ঘ":126, "ঙ":346, "চ":14, "ছ":16, "জ":245, "ঝ":356, "ঞ":25,
+        // | ট | ঠ | ড | ঢ | ণ | ত | থ | দ | ধ | ন | 
+        "ট":23456, "ঠ":2456, "ড":1246, "ঢ":123456, "ণ":3456, "ত":2345, "থ":1456, "দ":145, "ধ":2346, "ন":1345,
+        // | প | ফ | ব | ভ | ম | য | র | ল | ৱ |
+        "প":1234, "ফ":235, "ব":12, "ভ":45, "ম":134, "য":13456, "র":1235, "ল":123, "ৱ":1236,
+        // | শ | ষ | স | হ | ক্ষ | জ্ঞ | ড় | ঢ় | য় | ৎ | 
+        "শ":146, "ষ":12346, "স":234, "হ":125, "ক্ষ":12345, "জ্ঞ":156, "ড়":12456, "ঢ়":[5, 12456], "য়":1, //"ৎ":,
+        // Diacritics
+        // | ক্ | কং | কঃ | কঁ | কঽ | 
+        "্":4, "ং":56, "ঃ":6, "ঁ":3, "ঽ":2,
+        // Numbers
+        // | ১ | ২ | ৩ | ৪ | ৫ | ৬ | ৭ | ৮ | ৯ | ০ |
+        "১":[3456, 1], "২":[3456, 12], "৩":[3456, 14], "৪":[3456, 145], "৫":[3456, 15], "৬":[3456, 124], "৭":[3456, 1245], "৮":[3456, 125], "৯":[3456, 24], "০":[3456, 245],
+        // Punctuation (common across languages)
+        "," : 2,	//⠂
+        ":" : 25,	//⠒
+        ";" : 23,	//⠆
+        "।" : 256,
+        "." : 256,
+        "॥" : [256, 256],
+        "?" : 236,
+        "’" : 2,
+        "!" : 235,	//⠖
+        "“" : 236,
+        "”" : 356,
+        "-" : 36,	//⠤
+        "—" : [36, 36],	//⠤⠤
+        "*" : [35, 35],	//⠔⠔
+        "#" : 3456,	//⠼
+        "[" : 2356,
+        "]" : 2356,
+    };
+    
+    function toUnicode(charCode) {
+        // Ref: http://en.wikipedia.org/wiki/Braille_Patterns#Identifying.2C_naming_and_ordering
+        //   1 4       1   8
+        //   2 5       2  10
+        //   3 6       4  20
+        //   7 8      40  80
+        var hexValueMap = [ 1, 2, 4, 8, 10, 0x20, 0x40, 0x80 ];
+        var result = 0;
+        while (charCode > 0)
+        {
+            var dotCode = (charCode % 10) - 1;
+            charCode = Math.floor(charCode / 10);
+            if (dotCode < 0)
+                continue;
+            result += hexValueMap[ dotCode ];
+        }
+        return result + 0x2800;
+    }
+    
+    function convert() {
+        var intxt = document.getElementById('transl2').value;
+        
+        if (intxt.length > 0 ) {
+            var currChar = intxt.charAt(intxt.length - 1);
+            var charCode = characters[currChar];
+            
+            if (typeof charCode == "undefined")
+            {
+                charCode = characters["?"];
+                throw new Error("Unsupported character '" + newCharacter + "'");
+            }
+            document.getElementById('brOut').value += String.fromCharCode(toUnicode(charCode));
+        }
+        else document.getElementById('brOut').value = "";
+    }
+    </script>
   </head>
   <body>
     <div class="wrapper">
@@ -146,14 +224,14 @@
       Type in <select id="languageDropDown" onchange="javascript:languageChangeHandler()"></select>
     </div>
 
-    <br>Text to convert<br><textarea id="transl2" style="width:610px;height:200px"></textarea>
+    <br>Text to convert<br><textarea id="transl2" style="width:610px;height:200px" onkeyup="convert()"></textarea>
 
     <br><div id="errorDiv"></div>
 
     <div class="messagebox success" style="width:600px">
         <strong>Result</strong>
         <div id='outControl'></div>
-        <br>Braille (Grade 1)<br><textarea id="transl2" style="width:585px;height:198px"></textarea>
+        <br>Braille (Grade 1)<br><textarea id="brOut" style="width:585px;height:198px"></textarea>
     </div>
 
       </section>
