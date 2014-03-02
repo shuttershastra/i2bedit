@@ -129,7 +129,59 @@
 		ga('create', 'UA-48568916-1', 'shuttershastra.github.io');
 		ga('send', 'pageview');
 	</script>
-    
+    <script>
+    function handlepaste (elem, e) {
+        var savedcontent = elem.innerHTML;
+        if (e && e.clipboardData && e.clipboardData.getData) {// Webkit - get data from clipboard, put into editdiv, cleanup, then cancel event
+            if (/text\/html/.test(e.clipboardData.types)) {
+                elem.innerHTML = e.clipboardData.getData('text/html');
+            }
+            else if (/text\/plain/.test(e.clipboardData.types)) {
+                elem.innerHTML = e.clipboardData.getData('text/plain');
+            }
+            else {
+                elem.innerHTML = "";
+            }
+            waitforpastedata(elem, savedcontent);
+            if (e.preventDefault) {
+                    e.stopPropagation();
+                    e.preventDefault();
+            }
+            return false;
+        }
+        else {// Everything else - empty editdiv and allow browser to paste content into it, then cleanup
+            elem.innerHTML = "";
+            waitforpastedata(elem, savedcontent);
+            return true;
+        }
+    }
+
+    function waitforpastedata (elem, savedcontent) {
+        if (elem.childNodes && elem.childNodes.length > 0) {
+            processpaste(elem, savedcontent);
+        }
+        else {
+            that = {
+                e: elem,
+                s: savedcontent
+            }
+            that.callself = function () {
+                waitforpastedata(that.e, that.s)
+            }
+            setTimeout(that.callself,20);
+        }
+    }
+
+    function processpaste (elem, savedcontent) {
+        pasteddata = elem.innerHTML;
+        //^^Alternatively loop through dom (elem.childNodes or elem.getElementsByTagName) here
+
+        elem.innerHTML = savedcontent;
+
+        // Do whatever with gathered data;
+        elem.value = convertStr(pasteddata);
+    }
+    </script>
     <script>
     var characters = 
     {
@@ -144,6 +196,8 @@
         "প":1234, "ফ":235, "ব":12, "ভ":45, "ম":134, "য":13456, "র":1235, "ল":123, "ৱ":1236,
         // | শ | ষ | স | হ | ক্ষ | জ্ঞ | ড় | ঢ় | য় | ৎ | 
         "শ":146, "ষ":12346, "স":234, "হ":125, "ক্ষ":12345, "জ্ঞ":156, "ড়":12456, "ঢ়":[5, 12456], "য়":1, //"ৎ":,
+        // Dependent vowel signs
+        "া":345, "ি":24, "ী":35, "ু":136, "ূ":1256, "ৃ":[5, 1235], "ৄ":[5, 123], "ে":15, "ৈ":34, "ো":135, "ৌ":246,
         // Diacritics
         // | ক্ | কং | কঃ | কঁ | কঽ | 
         "্":4, "ং":56, "ঃ":6, "ঁ":3, "ঽ":2,
@@ -189,23 +243,31 @@
         return result + 0x2800;
     }
     
-    function convert() {
-        var intxt = document.getElementById('transl2').value;
-        
-        if (intxt.length > 0 ) {
-            var currChar = intxt.charAt(intxt.length - 1);
+    function convertStr(inStr) {
+        var outStr = "";
+        for (i = 0; i < inStr.length; ++i) {
+            var currChar = inStr.charAt(i);
+            if (currChar == ' ' || currChar == '\t') {
+                outStr += currChar;
+                continue;
+            }
             var charCode = characters[currChar];
             
             if (typeof charCode == "undefined")
             {
                 charCode = characters["?"];
-                throw new Error("Unsupported character '" + newCharacter + "'");
+                throw new Error("Unsupported character '" + currChar + "'");
             }
-            document.getElementById('brOut').value += String.fromCharCode(toUnicode(charCode));
+            outStr += String.fromCharCode(toUnicode(charCode))
         }
-        else document.getElementById('brOut').value = "";
+        return outStr;
+    }
+    
+    function convert(e) {
+        document.getElementById('brOut').value = convertStr(e.value);
     }
     </script>
+    
   </head>
   <body>
     <div class="wrapper">
@@ -216,7 +278,7 @@
       </header>
       <section>
         <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to I2Bedit.</h3>
 
     <center>Type in Indian languages (Press Ctrl+g to toggle between English and Hindi)</center>
     <div id='translControl'>
@@ -224,7 +286,7 @@
       Type in <select id="languageDropDown" onchange="javascript:languageChangeHandler()"></select>
     </div>
 
-    <br>Text to convert<br><textarea id="transl2" style="width:610px;height:200px" onkeyup="convert()"></textarea>
+    <br>Text to convert<br><textarea id="transl2" style="width:610px;height:200px" onkeyup="convert(this)" ></textarea>
 
     <br><div id="errorDiv"></div>
 
